@@ -1,0 +1,32 @@
+version: '3'
+services:
+  sharding-sphere-mysql:
+    container_name: sharding-sphere-mysql
+    image: "mysql:5.7"
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - ./schema/manual_schema.sql:/docker-entrypoint-initdb.d/manual_schema.sql
+
+  sharding-sphere-proxy:
+    container_name: sharding-sphere-proxy
+    image: "shardingsphere/sharding-proxy:3.1.0"
+    depends_on:
+      - sharding-sphere-mysql
+    entrypoint: >
+      /bin/sh -c "/opt/wait-for-it.sh sharding-sphere-mysql:3306 --timeout=20 --strict --
+      && /opt/sharding-proxy/bin/start.sh 3308
+      && tail -f /opt/sharding-proxy/logs/stdout.log"
+    ports:
+      - "13308:3308"
+    links:
+      - "sharding-sphere-mysql"
+    volumes:
+      - ./conf/:/opt/sharding-proxy/conf
+      - ./tools/wait-for-it.sh:/opt/wait-for-it.sh
+    environment:
+      - JVM_OPTS="-Djava.awt.headless=true"
+
+

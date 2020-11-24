@@ -1,0 +1,40 @@
+######################################################################################################
+# 
+# Here you can configure the rules for the proxy.
+# This example is configuration of sharding rule.
+#   
+# If you want to use sharding, please refer to this file; 
+# if you want to use master-slave, please refer to the config-master_slave.yaml.
+# 
+######################################################################################################
+
+schemaName: sharding_demo
+
+dataSources:
+  dbs1:
+    url: jdbc:mysql://sharding-sphere-mysql:3306/dbs1?useSSL=false&characterEncoding=utf-8
+    username: root
+    password:
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    maxLifetimeMilliseconds: 1800000
+    maxPoolSize: 50
+
+shardingRule:
+  tables:
+    online_order:
+      actualDataNodes: dbs1.online_order${0..1}
+      tableStrategy:
+        inline:
+          shardingColumn: id
+          algorithmExpression: online_order${id % 2}
+      keyGeneratorColumnName: id
+  bindingTables:
+    - online_order
+  defaultDatabaseStrategy:
+    inline:
+      shardingColumn: user_id
+      algorithmExpression: dbs1
+  defaultTableStrategy:
+    none:
+  defaultKeyGeneratorClassName: io.shardingsphere.core.keygen.DefaultKeyGenerator
