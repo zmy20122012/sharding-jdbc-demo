@@ -1,0 +1,42 @@
+server:
+  port: 8888
+
+spring:
+  jpa:
+    database: mysql
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+  shardingsphere:
+    datasource:
+      names: dbs0, dbs1
+      dbs0:
+        type: com.zaxxer.hikari.HikariDataSource
+        jdbc-url: jdbc:mysql://localhost:3306/dbs0?useSSL=false&characterEncoding=utf-8
+        username: root
+        password: root
+        max-active: 16
+      dbs1:
+        type: com.zaxxer.hikari.HikariDataSource
+        jdbc-url: jdbc:mysql://localhost:3306/dbs1?useSSL=false&characterEncoding=utf-8
+        username: root
+        password: root
+        max-active: 16
+    sharding:
+      default-data-source-name: dbs0
+      default-database-strategy:
+        inline:
+          sharding-column: user_id
+          algorithm-expression: dbs$->{user_id % 2}
+      tables:
+        online_order:
+          actual-data-nodes: dbs$->{0..1}.online_order$->{0..1}
+          table-strategy:
+            inline:
+              sharding-column: id
+              algorithm-expression: online_order$->{id % 2}
+          key-generator:
+            column: id
+            type: SNOWFLAKE
+      binding-tables: online_order
+
